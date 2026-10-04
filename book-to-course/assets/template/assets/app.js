@@ -359,14 +359,19 @@ function mathmlSupported() {
     probe.innerHTML = '<math><mn>1</mn></math>';
     const plainH = probe.firstChild.getBoundingClientRect().height;
     probe.remove();
+    // no usable layout yet (e.g. probed inside a hidden/display:none ancestor) — can't tell
+    // either way, so assume supported and don't cache a guess; a later real call can re-probe
+    if (!plainH) return true;
     mathmlOk = fracH > plainH * 1.3;
   } catch (e) { mathmlOk = true; }
   return mathmlOk;
 }
+let mathmlWarned = false;
 function tex2mml(src, display) {
   if (!mathmlSupported()) {
+    if (!mathmlWarned) { mathmlWarned = true; document.body.prepend(h("div", { class: "mathml-warn" }, "⚠ " + t("mathmlUnsupported"))); }
     const raw = (display ? "$$" : "$") + src + (display ? "$$" : "$");
-    return '<span class="math-err" title="' + esc(t("mathmlUnsupported")) + '">' + esc(raw) + "</span>";
+    return '<span class="math-raw" title="' + esc(t("mathmlUnsupported")) + '">' + esc(raw) + "</span>";
   }
   try {
     const body = mathParse(String(src == null ? "" : src));
@@ -967,7 +972,6 @@ function initChrome() {
 }
 (async function boot() {
   initChrome(); await loadProgress(); setSaveState();
-  if (!mathmlSupported()) document.body.prepend(h("div", { class: "mathml-warn" }, "⚠ " + t("mathmlUnsupported")));
   window.addEventListener("hashchange", route); route();
   window.__course = { get progress() { return P; }, route, save, tex2mml };
 })();
