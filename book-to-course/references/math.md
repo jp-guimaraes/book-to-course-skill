@@ -57,3 +57,8 @@ the file, the block and the bad command so you can fix it before it ever reaches
 If a broken formula somehow reaches the page anyway (it shouldn't — the build should have caught it first), it renders
 as the raw LaTeX source with a dotted underline instead of blanking the lesson. Hovering it shows what went wrong. Treat
 that as a sign the build step was skipped, not as acceptable output to ship.
+
+The player also detects browsers without MathML support (Chrome/Edge before 109, released January 2023) and falls back
+to the same raw-LaTeX-with-dotted-underline style for every formula, plus a one-time banner telling the learner to update
+their browser. This is rare in practice but means an outdated browser degrades to readable LaTeX source instead of
+garbled, unstyled glyphs.

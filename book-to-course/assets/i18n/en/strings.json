@@ -105,5 +105,6 @@
   "callout_warning": "Careful",
   "callout_analogy": "Analogy",
   "callout_key": "Remember",
-  "callout_example": "Example"
+  "callout_example": "Example",
+  "mathmlUnsupported": "Your browser can't display math formulas properly — update it to see equations typeset correctly."
 }

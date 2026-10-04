@@ -105,5 +105,6 @@
   "callout_warning": "Uważaj",
   "callout_analogy": "Analogia",
   "callout_key": "Zapamiętaj",
-  "callout_example": "Przykład"
+  "callout_example": "Przykład",
+  "mathmlUnsupported": "Twoja przeglądarka nie wyświetla poprawnie wzorów matematycznych — zaktualizuj ją, aby zobaczyć równania prawidłowo sformatowane."
 }

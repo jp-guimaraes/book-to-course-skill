@@ -79,6 +79,7 @@ math { line-height: 1.2; }
 /* overflow-x alone makes overflow-y compute to auto, and tall formulas (roots, fractions) overflow by a few px */
 .mathblock { overflow-x: auto; overflow-y: hidden; padding: .3em 0; margin: 1rem 0; }
 .math-err { font-family: var(--mono); color: var(--bad); border-bottom: 1px dotted var(--bad); cursor: help; }
+.mathml-warn { background: var(--warn-soft); color: var(--warn); text-align: center; padding: 8px 16px; font-size: .85rem; font-weight: 600; }
 
 /* Scroll reveal */
 .rv { opacity: 0; transform: translateY(16px); transition: opacity .55s ease, transform .55s ease; }
