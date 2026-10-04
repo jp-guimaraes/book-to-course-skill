@@ -661,6 +661,23 @@ function qFill(q, uid) {
     reveal: () => { inp.value = [].concat(q.answer)[0]; el.classList.remove("bad"); el.classList.add("good"); },
     reset: () => { inp.value = ""; el.classList.remove("good", "bad"); } };
 }
+function parseNum(s) {
+  s = String(s == null ? "" : s).trim().replace(",", ".");
+  if (!s) return NaN;
+  const m = /^(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)$/.exec(s);
+  if (m) { const d = +m[2]; return d ? +m[1] / d : NaN; }
+  return Number(s);
+}
+function qNumeric(q, uid) {
+  const inp = h("input", { type: "text", inputmode: "decimal", autocomplete: "off", spellcheck: "false", placeholder: q.placeholder || "…", "aria-label": t("yourAnswer") });
+  const el = h("div", { class: "fill-in" }, inp, q.unit ? h("span", { class: "note-small" }, " " + q.unit) : null);
+  const tol = Math.abs(q.tolerance || 0);
+  const val = () => parseNum(inp.value);
+  return { el, answered: () => inp.value.trim() !== "", correct: () => { const v = val(); return !Number.isNaN(v) && Math.abs(v - q.answer) <= tol; }, lock: v => (inp.disabled = v),
+    mark: ok => { el.classList.remove("good", "bad"); el.classList.add(ok ? "good" : "bad"); },
+    reveal: () => { inp.value = String(q.answer); el.classList.remove("bad"); el.classList.add("good"); },
+    reset: () => { inp.value = ""; el.classList.remove("good", "bad"); } };
+}
 function qOrder(q, uid) {
   const n = q.items.length; let order = [...Array(n).keys()]; const rnd = rng(uid);
   const shuffle = () => { for (let k = 0; k < 6; k++) { for (let i = n - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; } if (order.some((v, i) => v !== i)) break; } };
@@ -680,7 +697,7 @@ function qOrder(q, uid) {
 function makeQuestion(q0, qi, quizId) {
   const q = q0.type === "truefalse" ? Object.assign({}, q0, { type: "single", options: [t("tTrue"), t("tFalse")], answer: q0.answer ? 0 : 1 }) : q0;
   const uid = quizId + "-" + qi;
-  const impl = q.type === "multi" ? qMulti(q, uid) : q.type === "fill" ? qFill(q, uid) : q.type === "order" ? qOrder(q, uid) : qSingle(q, uid);
+  const impl = q.type === "multi" ? qMulti(q, uid) : q.type === "fill" ? qFill(q, uid) : q.type === "numeric" ? qNumeric(q, uid) : q.type === "order" ? qOrder(q, uid) : qSingle(q, uid);
   const fb = h("div", { class: "q-feedback", role: "status" });
   const root = h("div", { class: "question" }, h("div", { class: "q-head" }, h("span", { class: "q-num" }, String(qi + 1)), h("div", { class: "q-text", html: md(q.q) })), q.code ? codeBlock({ code: q.code, lang: q.lang }) : null, impl.el);
   const hints = q.hints || []; let used = 0;

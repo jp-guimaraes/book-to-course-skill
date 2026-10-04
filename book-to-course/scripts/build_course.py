@@ -198,8 +198,14 @@ def check_question(q, where, rep, test_mode):
         it = q.get("items")
         if not (isinstance(it, list) and len(it) >= 2):
             rep.err(where, "order: `items` must list the steps in the CORRECT order (≥2); the page shuffles them")
+    elif t == "numeric":
+        a, tol = q.get("answer"), q.get("tolerance", 0)
+        if not (isinstance(a, (int, float)) and not isinstance(a, bool)):
+            rep.err(where, "numeric: `answer` must be a number")
+        if not (isinstance(tol, (int, float)) and not isinstance(tol, bool) and tol >= 0):
+            rep.err(where, "numeric: `tolerance` must be a number ≥ 0")
     else:
-        rep.err(where, "unknown question type '%s' (single, multi, truefalse, fill, order)" % t)
+        rep.err(where, "unknown question type '%s' (single, multi, truefalse, fill, order, numeric)" % t)
     if not q.get("explanation"):
         rep.warn(where, "no `explanation` — learners learn most from the 'why'")
     if "hint" in q:
