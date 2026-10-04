@@ -63,11 +63,9 @@
           "explanation": "$(-5)^2 - 4(1)(6) = 25 - 24 = 1$, so $\\Delta = 1$."
         },
         {
-          "type": "fill",
+          "type": "numeric",
           "q": "Solve $x^2 - 5x + 6 = 0$ for the larger root.",
-          "answer": [
-            "3"
-          ],
+          "answer": 3,
           "hint": [
             "Use the formula with $a=1$, $b=-5$, $c=6$.",
             "$x = \\frac{5 \\pm 1}{2}$."
