@@ -661,12 +661,21 @@ function qFill(q, uid) {
     reveal: () => { inp.value = [].concat(q.answer)[0]; el.classList.remove("bad"); el.classList.add("good"); },
     reset: () => { inp.value = ""; el.classList.remove("good", "bad"); } };
 }
-function parseNum(s) {
-  s = String(s == null ? "" : s).trim().replace(",", ".");
+function parseDecimal(s) {
+  s = String(s).trim().replace(/[\s ]+/g, ""); // "1 500" / "1 500" -> "1500" (space-grouped thousands)
   if (!s) return NaN;
-  const m = /^(-?\d+(?:\.\d+)?)\s*\/\s*(-?\d+(?:\.\d+)?)$/.exec(s);
-  if (m) { const d = +m[2]; return d ? +m[1] / d : NaN; }
+  // a single comma not followed by exactly 3 digits is a decimal separator ("3,73" -> 3.73);
+  // a single comma followed by exactly 3 digits, or several commas, is thousands grouping ("1,500" -> 1500)
+  const commas = (s.match(/,/g) || []).length;
+  s = commas === 1 && !/,\d{3}$/.test(s) ? s.replace(",", ".") : s.replace(/,/g, "");
   return Number(s);
+}
+function parseNum(s) {
+  s = String(s == null ? "" : s).trim();
+  if (!s) return NaN;
+  const m = /^(.+?)\s*\/\s*(.+)$/.exec(s);
+  if (m) { const d = parseDecimal(m[2]); return d ? parseDecimal(m[1]) / d : NaN; }
+  return parseDecimal(s);
 }
 function qNumeric(q, uid) {
   const inp = h("input", { type: "text", inputmode: "decimal", autocomplete: "off", spellcheck: "false", placeholder: q.placeholder || "…", "aria-label": t("yourAnswer") });

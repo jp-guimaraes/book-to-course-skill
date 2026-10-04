@@ -68,7 +68,7 @@ a `tolerance` instead of demanding one exact string — `order` of the steps in 
 - Wrong options are plausible misconceptions (off-by-one, confusing `=` and `==`), never silly or trick-worded.
 - No "all of the above"/"none of the above". Keep options similar in length so the answer doesn't give itself away.
 - The `explanation` says **why the right answer is right and why the most tempting wrong one is wrong** — this is where learning happens.
-- Mix types: `single` for concepts, `multi` for "which are true", `fill` for syntax/commands, `order` for processes, `truefalse` for quick misconceptions, code snippets for tracing.
+- Mix types: `single` for concepts, `multi` for "which are true", `fill` for syntax/commands, `numeric` for a computed value, `order` for processes, `truefalse` for quick misconceptions, code snippets for tracing.
 
 **Hints** (1–3 per question/exercise), increasing in strength: (1) re-aim attention ("look at what `i` is on the second pass"), (2) name the concept or tool ("this is a job for `range`"), (3) nearly the answer without giving it away. Hints must never be the explanation itself.
 

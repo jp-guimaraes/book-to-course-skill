@@ -39,7 +39,7 @@ BACKTICK_SPAN = re.compile(r"`[^`]+`")
 NON_PROSE_KEYS = {
     "code", "output", "solution", "input", "command", "command_display", "lang", "language",
     "id", "type", "file", "exercise_dir", "kind", "difficulty", "answer", "placeholder",
-    "pages", "sections", "chapter", "svg", "highlight",
+    "pages", "sections", "chapter", "svg", "highlight", "unit",
 }
 
 
@@ -204,6 +204,9 @@ def check_question(q, where, rep, test_mode):
             rep.err(where, "numeric: `answer` must be a number")
         if not (isinstance(tol, (int, float)) and not isinstance(tol, bool) and tol >= 0):
             rep.err(where, "numeric: `tolerance` must be a number ≥ 0")
+        elif tol == 0 and isinstance(a, float) and len(repr(a).split(".")[-1]) > 3:
+            rep.warn(where, "numeric: `answer` has more than 3 decimal places with `tolerance: 0` — "
+                      "a learner typing a fraction (e.g. 1/3) or a rounded value will almost never match exactly; set a `tolerance`")
     else:
         rep.err(where, "unknown question type '%s' (single, multi, truefalse, fill, order, numeric)" % t)
     if not q.get("explanation"):
