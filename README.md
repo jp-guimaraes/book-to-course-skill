@@ -60,6 +60,17 @@ Starting the course this way requires Python 3. Programming exercises also requi
 
 The skill and its supporting scripts, templates, and references are in [`book-to-course/`](book-to-course/SKILL.md). Generated courses are self-contained folders that can be packaged and shared.
 
+## Course on a phone or tablet (Android)
+
+The second skill in this plugin, [`course-to-apk`](course-to-apk/SKILL.md), packages a generated course as a small offline Android app. Ask, for example: *"Make an APK of this course for my tablet."*
+
+- The app is a lightweight WebView wrapper: the course is bundled inside the APK, works without internet access, and keeps progress on the device across updates. It runs on Android 7.0 and newer.
+- The APK is built straight from the Android SDK tools with no Gradle or Android Studio project, and signed with the Android debug key (`~/.android/debug.keystore`). You can also sign it with your own keystore.
+- Building requires JDK 17+ and Android SDK build-tools plus a platform package. The skill checks for them first. If something is missing, it tells you what to download and where to get it, then either waits for you to install it or downloads it into `~/.local/share/course-to-apk` with your consent (no sudo).
+- The output goes next to the course, in `<course>-android/`. Copy the APK to the device and open it, or install it over USB with `adb`.
+
+Code exercises can't run their unit tests on a phone, so use the computer version for those. Lessons, quizzes, tests, and flashcards all work in the app.
+
 ## License
 
 Released under the [MIT License](LICENSE).

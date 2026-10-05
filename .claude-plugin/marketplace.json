@@ -12,9 +12,8 @@
     {
       "name": "book-to-course",
       "source": "./",
-      "skills": ["./book-to-course"],
-      "description": "Turn a book or document (EPUB, PDF, HTML, DOCX, Markdown, TXT) into an interactive, beginner-friendly course delivered as a local web page.",
-      "version": "1.0.0",
+      "description": "Turn a book or document (EPUB, PDF, HTML, DOCX, Markdown, TXT) into an interactive, beginner-friendly course delivered as a local web page; plus course-to-apk to package a course as an offline Android app (APK).",
+      "version": "1.1.0",
       "author": {
         "name": "Sebastian Haba"
       },
@@ -22,7 +21,14 @@
       "repository": "https://github.com/sebastianhaba/book-to-course-skill",
       "license": "MIT",
       "category": "education",
-      "keywords": ["course", "learning", "education", "book", "quiz"]
+      "keywords": [
+        "course",
+        "learning",
+        "education",
+        "book",
+        "quiz",
+        "android"
+      ]
     }
   ]
 }
