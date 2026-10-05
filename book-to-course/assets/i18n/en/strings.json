@@ -55,6 +55,8 @@
   "showSolution": "Show solution",
   "hideSolution": "Hide solution",
   "confirmSolution": "Try once more on your own first! Really show the solution?",
+  "dlgYes": "Yes",
+  "dlgNo": "Cancel",
   "stTodo": "To do",
   "stPassed": "Passed",
   "stFailed": "Tests not passing yet",

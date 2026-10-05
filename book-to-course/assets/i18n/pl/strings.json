@@ -55,6 +55,8 @@
   "showSolution": "Pokaż rozwiązanie",
   "hideSolution": "Ukryj rozwiązanie",
   "confirmSolution": "Spróbuj jeszcze raz samodzielnie! Na pewno pokazać rozwiązanie?",
+  "dlgYes": "Tak",
+  "dlgNo": "Anuluj",
   "stTodo": "Do zrobienia",
   "stPassed": "Zaliczone",
   "stFailed": "Testy jeszcze nie przechodzą",

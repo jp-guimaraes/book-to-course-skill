@@ -55,6 +55,8 @@
   "showSolution": "Ver solução",
   "hideSolution": "Esconder solução",
   "confirmSolution": "Tente mais uma vez sozinho primeiro! Mostrar a solução mesmo assim?",
+  "dlgYes": "Sim",
+  "dlgNo": "Cancelar",
   "stTodo": "A fazer",
   "stPassed": "Aprovado",
   "stFailed": "Testes ainda não passam",

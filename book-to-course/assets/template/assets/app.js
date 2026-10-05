@@ -28,6 +28,16 @@ const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(
 const $ = (s, r) => (r || document).querySelector(s);
 /* replaceChildren() stringifies arrays and null — fill() flattens, drops empties and accepts text */
 function fill(el, ...kids) { el.replaceChildren(...kids.flat(Infinity).filter(k => k != null && k !== false).map(k => (k.nodeType ? k : document.createTextNode(String(k))))); return el; }
+/* in-page confirm — native window.confirm is silently "false" in Android WebView */
+function ask(msg, yes) {
+  const close = () => { ov.remove(); document.removeEventListener("keydown", key); };
+  const key = e => { if (e.key === "Escape") close(); };
+  const ok = h("button", { class: "btn", type: "button", onclick: () => { close(); yes(); } }, t("dlgYes"));
+  const ov = h("div", { class: "dlg-ov", onclick: e => { if (e.target === ov) close(); } },
+    h("div", { class: "dlg", role: "dialog", "aria-modal": "true" }, h("p", null, msg),
+      h("div", { class: "dlg-act" }, h("button", { class: "btn ghost", type: "button", onclick: close }, t("dlgNo")), ok)));
+  document.addEventListener("keydown", key); document.body.append(ov); ok.focus();
+}
 function add(el, ...kids) { kids.flat(Infinity).forEach(k => { if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(String(k))); }); return el; }
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const reduceMotion = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -777,9 +787,8 @@ function quizBlock(b, les) {
   build();
   if (isTest) {
     const res = h("div"), go = h("button", { class: "btn", type: "button" }, t("checkTest")), again = h("button", { class: "btn ghost", type: "button", style: "display:none" }, t("retry"));
-    go.onclick = () => {
-      const miss = qs.filter(x => !x.answered()).length;
-      if (miss && !confirm(t("unanswered", miss))) return;
+    go.onclick = () => { const miss = qs.filter(x => !x.answered()).length; if (miss) ask(t("unanswered", miss), grade); else grade(); };
+    const grade = () => {
       let right = 0; qs.forEach(x => { const ok = x.answered() && x.impl.correct(); if (ok) right++; x.impl.lock(true); x.show(ok, true); });
       const frac = right / qs.length; st.attempts++; st.best = Math.max(st.best, frac); st.last = frac; const pass = frac >= need;
       if (pass) { st.passed = true; P.lessons[les.id] = Object.assign(P.lessons[les.id] || {}, { completed: true, completedAt: new Date().toISOString() }); celebrate(); }
@@ -855,9 +864,10 @@ function exerciseBlock(b, les) {
     const sb = h("button", { class: "btn ghost sm", type: "button" }, "👁 " + t("showSolution"));
     sb.onclick = () => {
       if (solBox.childNodes.length) { solBox.replaceChildren(); sb.textContent = "👁 " + t("showSolution"); return; }
-      if (!confirm(t("confirmSolution"))) return;
-      fill(solBox, h("h4", null, t("solution")), sol.map(x => codeBlock({ code: x.content, file: x.path, lang: x.lang || langOf(x.path) })), b.solution_explain ? h("div", { class: "text", html: md(b.solution_explain) }) : null);
-      sb.textContent = "🙈 " + t("hideSolution");
+      ask(t("confirmSolution"), () => {
+        fill(solBox, h("h4", null, t("solution")), sol.map(x => codeBlock({ code: x.content, file: x.path, lang: x.lang || langOf(x.path) })), b.solution_explain ? h("div", { class: "text", html: md(b.solution_explain) }) : null);
+        sb.textContent = "🙈 " + t("hideSolution");
+      });
     };
     actions.append(sb);
   }
@@ -909,7 +919,7 @@ function renderHome() {
     h("div", { class: "stats block" }, h("div", { class: "stat" }, h("b", null, ORDER.filter(lessonDone).length + "/" + ORDER.length), h("span", null, t("lessonsDone"))), h("div", { class: "stat" }, h("b", null, ex.p + "/" + ex.t), h("span", null, t("exercisesDone"))), h("div", { class: "stat" }, h("b", null, qz.c + "/" + qz.t), h("span", null, t("quizScore"))), h("div", { class: "stat" }, h("b", null, "~" + minLeft + " " + t("min")), h("span", null, t("minLeft") + "…"))),
     C.chapters.map((ch, ci) => h("section", { class: "ch-card block" }, h("h3", null, h("span", { class: "ch-num" }, ci + 1), ch.title, h("span", { class: "chip", style: "margin-left:auto" }, chapterPct(ch) + "%")), ch.summary ? h("div", { class: "note-small", html: inline(ch.summary) }) : null, h("div", { class: "bar", style: "margin-top:10px" }, h("div", { class: "bar-fill", style: "width:" + chapterPct(ch) + "%" })),
       h("ul", null, ch.lessons.map(id => h("li", null, h("a", { href: "#/lesson/" + id }, h("span", { class: "st" }, lessonDone(id) ? "✓" : lessonStarted(id) ? "◐" : "○"), C.lessons[id].title + (C.lessons[id].kind === "test" ? " 🏁" : ""))))))),
-    h("div", { class: "footer-tools" }, h("span", null, serverMode ? t("progressFile") : t("savedBrowser")), h("button", { class: "btn ghost sm", type: "button", onclick: () => { if (confirm(t("resetConfirm"))) { P = { version: 1, lessons: {}, quizzes: {}, exercises: {}, cards: {}, last: null, updated: null }; save(true); route(); } } }, t("reset"))));
+    h("div", { class: "footer-tools" }, h("span", null, serverMode ? t("progressFile") : t("savedBrowser")), h("button", { class: "btn ghost sm", type: "button", onclick: () => ask(t("resetConfirm"), () => { P = { version: 1, lessons: {}, quizzes: {}, exercises: {}, cards: {}, last: null, updated: null }; save(true); route(); }) }, t("reset"))));
   armReveal(el);
 }
 function renderGlossary() {
