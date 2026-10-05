@@ -24,8 +24,9 @@ from ui_langs import ui_lang_packs, ui_strings
 BLOCK_REQ = {
     "text": ["md"], "callout": ["md"], "code": ["code"], "stepper": ["steps"], "reveal": ["prompt", "md"],
     "from_book": ["md"], "table": ["headers", "rows"], "flow": ["nodes"], "svg": ["svg"], "quiz": ["questions"],
-    "exercise": ["title", "goal"], "flashcards": ["cards"], "summary": ["points"],
+    "exercise": ["title", "goal"], "flashcards": ["cards"], "summary": ["points"], "derivation": ["steps"],
 }
+REL_RE = re.compile(r"^[^\n]{1,12}$")
 CALLOUTS = {"tip", "note", "warning", "analogy", "key", "example"}
 ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 EX_MINUTES = {"easy": 8, "medium": 15, "hard": 25}
@@ -40,6 +41,8 @@ NON_PROSE_KEYS = {
     "code", "output", "solution", "input", "command", "command_display", "lang", "language",
     "id", "type", "file", "exercise_dir", "kind", "difficulty", "answer", "placeholder",
     "pages", "sections", "chapter", "svg", "highlight",
+    # derivation: bare LaTeX (no $ delimiters) — linted directly with bare=True instead
+    "lhs", "rhs", "rel", "result",
 }
 
 
@@ -334,6 +337,34 @@ def check_block(b, where, lesson, ids, rep, counters):
         if b.get("difficulty") and b["difficulty"] not in EX_MINUTES:
             rep.err(where, "difficulty must be easy, medium or hard")
         embed_exercise(b, rep.root, where, rep)
+    if t == "derivation":
+        steps = b["steps"]
+        if not isinstance(steps, list) or len(steps) < 2:
+            rep.err(where, "derivation needs at least 2 steps")
+        else:
+            if len(steps) > 8:
+                rep.warn(where, "derivation has %d steps — more than ~8 is hard to follow in one block" % len(steps))
+            for i, s in enumerate(steps):
+                sw = "%s step %d" % (where, i + 1)
+                if not isinstance(s, dict) or not str(s.get("rhs", "")).strip():
+                    rep.err(sw, "needs `rhs`")
+                    continue
+                if not s.get("why"):
+                    rep.warn(sw, "no `why` — say what algebraic move this step makes")
+                rel = s.get("rel", b.get("rel", "="))
+                if not isinstance(rel, str) or not REL_RE.match(rel):
+                    rep.err(sw, "`rel` must be a short (≤12 char) relation symbol like = or \\le")
+                    rel = None
+                # lhs/rhs/rel are LaTeX source but authors (LLMs especially) will sometimes write
+                # a bare JSON number ("rhs": 4) — stringify before lint_latex, which indexes into
+                # the value expecting a string and otherwise raises a TypeError on an int/float
+                lhs = s.get("lhs")
+                lint_latex(rep, "" if lhs is None else str(lhs), sw + " lhs", bare=True)
+                if rel is not None:
+                    lint_latex(rep, rel, sw + " rel", bare=True)
+                lint_latex(rep, str(s["rhs"]), sw + " rhs", bare=True)
+        if b.get("result"):
+            lint_latex(rep, str(b["result"]), where + " result", bare=True)
 
 
 def lesson_minutes(les):
@@ -354,6 +385,8 @@ def lesson_minutes(les):
             practice += b.get("minutes") or EX_MINUTES.get(b.get("difficulty") or "medium", 15)
         elif t == "flashcards":
             practice += 0.3 * len(b["cards"])
+        elif t == "derivation":
+            theory += sum(wc(s.get("why")) for s in b.get("steps", []) if isinstance(s, dict)) / 130.0 + 0.5 * len(b.get("steps", []))
     return theory, practice
 
 

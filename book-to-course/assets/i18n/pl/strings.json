@@ -55,6 +55,8 @@
   "showSolution": "Pokaż rozwiązanie",
   "hideSolution": "Ukryj rozwiązanie",
   "confirmSolution": "Spróbuj jeszcze raz samodzielnie! Na pewno pokazać rozwiązanie?",
+  "dlgYes": "Tak",
+  "dlgNo": "Anuluj",
   "stTodo": "Do zrobienia",
   "stPassed": "Zaliczone",
   "stFailed": "Testy jeszcze nie przechodzą",
@@ -106,5 +108,10 @@
   "callout_analogy": "Analogia",
   "callout_key": "Zapamiętaj",
   "callout_example": "Przykład",
+  "derivation": "Wyprowadzenie",
+  "why": "Dlaczego",
+  "result": "Wynik",
+  "showAll": "Pokaż wszystko",
+  "stepByStep": "Krok po kroku",
   "mathmlUnsupported": "Twoja przeglądarka nie wyświetla poprawnie wzorów matematycznych — zaktualizuj ją, aby zobaczyć równania prawidłowo sformatowane."
 }

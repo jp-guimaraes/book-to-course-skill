@@ -28,6 +28,16 @@ const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(
 const $ = (s, r) => (r || document).querySelector(s);
 /* replaceChildren() stringifies arrays and null — fill() flattens, drops empties and accepts text */
 function fill(el, ...kids) { el.replaceChildren(...kids.flat(Infinity).filter(k => k != null && k !== false).map(k => (k.nodeType ? k : document.createTextNode(String(k))))); return el; }
+/* in-page confirm — native window.confirm is silently "false" in Android WebView */
+function ask(msg, yes) {
+  const close = () => { ov.remove(); document.removeEventListener("keydown", key); };
+  const key = e => { if (e.key === "Escape") close(); };
+  const ok = h("button", { class: "btn", type: "button", onclick: () => { close(); yes(); } }, t("dlgYes"));
+  const ov = h("div", { class: "dlg-ov", onclick: e => { if (e.target === ov) close(); } },
+    h("div", { class: "dlg", role: "dialog", "aria-modal": "true" }, h("p", null, msg),
+      h("div", { class: "dlg-act" }, h("button", { class: "btn ghost", type: "button", onclick: close }, t("dlgNo")), ok)));
+  document.addEventListener("keydown", key); document.body.append(ov); ok.focus();
+}
 function add(el, ...kids) { kids.flat(Infinity).forEach(k => { if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(String(k))); }); return el; }
 const wait = ms => new Promise(r => setTimeout(r, ms));
 const reduceMotion = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -604,6 +614,7 @@ function renderBlock(b, les) {
     case "code": return h("div", { class: "block" }, b.title ? h("h4", null, b.title) : null, codeBlock(b),
       b.output ? [h("div", { class: "out-label" }, "▶ " + (b.output_label || t("output"))), h("pre", { class: "term" }, b.output)] : null, b.explain ? h("div", { class: "text", html: md(b.explain) }) : null);
     case "stepper": return stepperBlock(b);
+    case "derivation": return derivationBlock(b);
     case "reveal": return revealBlock(b);
     case "from_book": return h("figure", { class: "block frombook", style: "margin-left:auto;margin-right:auto" }, h("div", { class: "fb-label" }, "📖 " + t("frombook") + (b.source ? " · " + b.source : "")), h("div", { html: md(b.md) }), b.code ? codeBlock({ code: b.code, lang: b.lang }) : null);
     case "table": return h("div", { class: "block tablewrap" }, h("table", null, h("thead", null, h("tr", null, b.headers.map(x => h("th", { html: inline(x) })))), h("tbody", null, b.rows.map(r => h("tr", null, r.map(c => h("td", { html: inline(c) })))))));
@@ -617,20 +628,62 @@ function renderBlock(b, les) {
   }
 }
 
-function stepperBlock(b) {
+/* shared by stepperBlock and derivationBlock: dots + prev/next + "Step X of N", driven by
+   an external onStep(idx, dir) callback that each block uses to render its own content */
+function stepControls(n, onStep) {
   let idx = 0;
-  const stage = h("div", { class: "stepper-stage" }), dots = h("div", { class: "dots" }), meta = h("div", { class: "note-small" });
+  const dots = h("div", { class: "dots" }), meta = h("div", { class: "note-small" });
   const prev = h("button", { class: "btn ghost sm", type: "button", onclick: () => go(idx - 1, "prev") }, "← " + t("prev"));
   const next = h("button", { class: "btn sm", type: "button", onclick: () => go(idx + 1, "next") }, t("next") + " →");
   function go(i, dir) {
-    idx = Math.max(0, Math.min(b.steps.length - 1, i)); const s = b.steps[idx];
+    idx = Math.max(0, Math.min(n - 1, i));
+    dots.replaceChildren(...Array.from({ length: n }, (_, j) => h("button", { class: "dot" + (j === idx ? " on" : j < idx ? " past" : ""), type: "button", "aria-label": t("step", j + 1, n), onclick: () => go(j, j > idx ? "next" : "prev") })));
+    meta.textContent = t("step", idx + 1, n); prev.disabled = idx === 0; next.disabled = idx === n - 1;
+    onStep(idx, dir);
+  }
+  const row = h("div", { class: "row" }, prev, next, meta);
+  return { row, dots, go, get idx() { return idx; } };
+}
+function stepperBlock(b) {
+  const stage = h("div", { class: "stepper-stage" });
+  const ctl = stepControls(b.steps.length, (idx, dir) => {
+    const s = b.steps[idx];
     stage.className = "stepper-stage"; void stage.offsetWidth; if (dir) stage.classList.add("anim-" + dir);
     fill(stage, h("div", { class: "step-title" }, (idx + 1) + ". " + (s.title || "")), s.md ? h("div", { html: md(s.md) }) : null, s.code ? codeBlock({ code: s.code, lang: s.lang || b.lang, highlight: s.highlight, file: s.file }) : null, s.output ? [h("div", { class: "out-label" }, "▶ " + t("output")), h("pre", { class: "term" }, s.output)] : null);
-    dots.replaceChildren(...b.steps.map((_, j) => h("button", { class: "dot" + (j === idx ? " on" : j < idx ? " past" : ""), type: "button", "aria-label": t("step", j + 1, b.steps.length), onclick: () => go(j, j > idx ? "next" : "prev") })));
-    meta.textContent = t("step", idx + 1, b.steps.length); prev.disabled = idx === 0; next.disabled = idx === b.steps.length - 1;
+  });
+  const root = h("div", { class: "block stepper" }, h("h3", { class: "block-title" }, "🪜 " + (b.title || "")), stage, ctl.dots, ctl.row);
+  ctl.go(0); return root;
+}
+function derivationBlock(b) {
+  const rel0 = b.rel || "=";
+  let showAll = false;
+  const rows = b.steps.map(s => {
+    const lhs = h("span", { class: "dv-lhs", html: s.lhs ? tex2mml(s.lhs, false) : "" });
+    const rel = h("span", { class: "dv-rel", html: tex2mml(s.rel || rel0, false) });
+    const rhs = h("span", { class: "dv-rhs", html: tex2mml(s.rhs, false) });
+    const why = h("div", { class: "dv-why", html: s.why ? md(s.why) : "" });
+    return { el: h("div", { class: "dv-row" }, lhs, rel, rhs, why) };
+  });
+  function sync(idx) {
+    rows.forEach((r, i) => {
+      r.el.classList.toggle("hidden", !showAll && i > idx);
+      r.el.classList.toggle("cur", !showAll && i === idx);
+      r.el.classList.toggle("past", showAll ? i !== idx : i < idx);
+    });
   }
-  const root = h("div", { class: "block stepper" }, h("h3", { class: "block-title" }, "🪜 " + (b.title || "")), stage, dots, h("div", { class: "row" }, prev, next, meta));
-  go(0); return root;
+  const ctl = stepControls(b.steps.length, idx => sync(idx));
+  const allBtn = h("button", { class: "btn ghost sm", type: "button", onclick: () => {
+    showAll = !showAll; allBtn.textContent = showAll ? t("stepByStep") : t("showAll"); sync(ctl.idx);
+  } }, t("showAll"));
+  ctl.row.append(allBtn);
+  const rowsEl = h("div", { class: "dv-rows" }, rows.map(r => r.el));
+  const root = h("div", { class: "block derivation" },
+    h("h3", { class: "block-title" }, "🧮 " + (b.title || t("derivation"))),
+    b.intro ? h("div", { html: md(b.intro) }) : null,
+    rowsEl, ctl.dots, ctl.row,
+    b.result ? h("div", { class: "dv-result" }, h("strong", null, t("result") + ": "), h("span", { html: tex2mml(String(b.result), false) })) : null,
+    b.note ? h("div", { class: "text", html: md(b.note) }) : null);
+  ctl.go(0); return root;
 }
 function revealBlock(b) {
   const ans = h("div", { class: "answer", html: md(b.md) });
@@ -763,9 +816,8 @@ function quizBlock(b, les) {
   build();
   if (isTest) {
     const res = h("div"), go = h("button", { class: "btn", type: "button" }, t("checkTest")), again = h("button", { class: "btn ghost", type: "button", style: "display:none" }, t("retry"));
-    go.onclick = () => {
-      const miss = qs.filter(x => !x.answered()).length;
-      if (miss && !confirm(t("unanswered", miss))) return;
+    go.onclick = () => { const miss = qs.filter(x => !x.answered()).length; if (miss) ask(t("unanswered", miss), grade); else grade(); };
+    const grade = () => {
       let right = 0; qs.forEach(x => { const ok = x.answered() && x.impl.correct(); if (ok) right++; x.impl.lock(true); x.show(ok, true); });
       const frac = right / qs.length; st.attempts++; st.best = Math.max(st.best, frac); st.last = frac; const pass = frac >= need;
       if (pass) { st.passed = true; P.lessons[les.id] = Object.assign(P.lessons[les.id] || {}, { completed: true, completedAt: new Date().toISOString() }); celebrate(); }
@@ -841,9 +893,10 @@ function exerciseBlock(b, les) {
     const sb = h("button", { class: "btn ghost sm", type: "button" }, "👁 " + t("showSolution"));
     sb.onclick = () => {
       if (solBox.childNodes.length) { solBox.replaceChildren(); sb.textContent = "👁 " + t("showSolution"); return; }
-      if (!confirm(t("confirmSolution"))) return;
-      fill(solBox, h("h4", null, t("solution")), sol.map(x => codeBlock({ code: x.content, file: x.path, lang: x.lang || langOf(x.path) })), b.solution_explain ? h("div", { class: "text", html: md(b.solution_explain) }) : null);
-      sb.textContent = "🙈 " + t("hideSolution");
+      ask(t("confirmSolution"), () => {
+        fill(solBox, h("h4", null, t("solution")), sol.map(x => codeBlock({ code: x.content, file: x.path, lang: x.lang || langOf(x.path) })), b.solution_explain ? h("div", { class: "text", html: md(b.solution_explain) }) : null);
+        sb.textContent = "🙈 " + t("hideSolution");
+      });
     };
     actions.append(sb);
   }
@@ -895,7 +948,7 @@ function renderHome() {
     h("div", { class: "stats block" }, h("div", { class: "stat" }, h("b", null, ORDER.filter(lessonDone).length + "/" + ORDER.length), h("span", null, t("lessonsDone"))), h("div", { class: "stat" }, h("b", null, ex.p + "/" + ex.t), h("span", null, t("exercisesDone"))), h("div", { class: "stat" }, h("b", null, qz.c + "/" + qz.t), h("span", null, t("quizScore"))), h("div", { class: "stat" }, h("b", null, "~" + minLeft + " " + t("min")), h("span", null, t("minLeft") + "…"))),
     C.chapters.map((ch, ci) => h("section", { class: "ch-card block" }, h("h3", null, h("span", { class: "ch-num" }, ci + 1), ch.title, h("span", { class: "chip", style: "margin-left:auto" }, chapterPct(ch) + "%")), ch.summary ? h("div", { class: "note-small", html: inline(ch.summary) }) : null, h("div", { class: "bar", style: "margin-top:10px" }, h("div", { class: "bar-fill", style: "width:" + chapterPct(ch) + "%" })),
       h("ul", null, ch.lessons.map(id => h("li", null, h("a", { href: "#/lesson/" + id }, h("span", { class: "st" }, lessonDone(id) ? "✓" : lessonStarted(id) ? "◐" : "○"), C.lessons[id].title + (C.lessons[id].kind === "test" ? " 🏁" : ""))))))),
-    h("div", { class: "footer-tools" }, h("span", null, serverMode ? t("progressFile") : t("savedBrowser")), h("button", { class: "btn ghost sm", type: "button", onclick: () => { if (confirm(t("resetConfirm"))) { P = { version: 1, lessons: {}, quizzes: {}, exercises: {}, cards: {}, last: null, updated: null }; save(true); route(); } } }, t("reset"))));
+    h("div", { class: "footer-tools" }, h("span", null, serverMode ? t("progressFile") : t("savedBrowser")), h("button", { class: "btn ghost sm", type: "button", onclick: () => ask(t("resetConfirm"), () => { P = { version: 1, lessons: {}, quizzes: {}, exercises: {}, cards: {}, last: null, updated: null }; save(true); route(); }) }, t("reset"))));
   armReveal(el);
 }
 function renderGlossary() {
