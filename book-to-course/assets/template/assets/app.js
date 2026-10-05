@@ -714,28 +714,26 @@ function qFill(q, uid) {
     reveal: () => { inp.value = [].concat(q.answer)[0]; el.classList.remove("bad"); el.classList.add("good"); },
     reset: () => { inp.value = ""; el.classList.remove("good", "bad"); } };
 }
-function parseDecimal(s) {
-  s = String(s).trim().replace(/[\s ]+/g, ""); // "1 500" / "1 500" -> "1500" (space-grouped thousands)
-  if (!s) return NaN;
-  // a single comma not followed by exactly 3 digits is a decimal separator ("3,73" -> 3.73);
-  // a single comma followed by exactly 3 digits, or several commas, is thousands grouping ("1,500" -> 1500)
-  const commas = (s.match(/,/g) || []).length;
-  s = commas === 1 && !/,\d{3}$/.test(s) ? s.replace(",", ".") : s.replace(/,/g, "");
-  return Number(s);
+/* A typed number is ambiguous when it has a comma ("0,125" is 0.125 to a pt/pl learner, 125 to
+   a US one), so try both readings and accept the answer if either one matches. */
+function numReadings(s) {
+  s = String(s == null ? "" : s).trim().replace(/[\s\u00A0]+/g, "");
+  if (!s) return [];
+  const out = [Number(s.replace(/,/g, ""))];                              // comma = grouping: "1,500", "1,234.5"
+  if (s.includes(",")) out.push(Number(s.replace(/\./g, "").replace(",", "."))); // comma = decimal: "0,125", "1.234,5"
+  return out.filter(n => !Number.isNaN(n));
 }
-function parseNum(s) {
-  s = String(s == null ? "" : s).trim();
-  if (!s) return NaN;
-  const m = /^(.+?)\s*\/\s*(.+)$/.exec(s);
-  if (m) { const d = parseDecimal(m[2]); return d ? parseDecimal(m[1]) / d : NaN; }
-  return parseDecimal(s);
+function numericMatches(input, answer, tol) {
+  const slash = String(input == null ? "" : input).indexOf("/");
+  const candidates = slash < 0 ? numReadings(input) : [].concat(...numReadings(String(input).slice(0, slash)).map(num =>
+    numReadings(String(input).slice(slash + 1)).filter(den => den !== 0).map(den => num / den)));
+  return candidates.some(v => Math.abs(v - answer) <= tol);
 }
 function qNumeric(q, uid) {
   const inp = h("input", { type: "text", inputmode: "decimal", autocomplete: "off", spellcheck: "false", placeholder: q.placeholder || "…", "aria-label": t("yourAnswer") });
   const el = h("div", { class: "fill-in" }, inp, q.unit ? h("span", { class: "note-small" }, " " + q.unit) : null);
   const tol = Math.abs(q.tolerance || 0);
-  const val = () => parseNum(inp.value);
-  return { el, answered: () => inp.value.trim() !== "", correct: () => { const v = val(); return !Number.isNaN(v) && Math.abs(v - q.answer) <= tol; }, lock: v => (inp.disabled = v),
+  return { el, answered: () => inp.value.trim() !== "", correct: () => numericMatches(inp.value, q.answer, tol), lock: v => (inp.disabled = v),
     mark: ok => { el.classList.remove("good", "bad"); el.classList.add(ok ? "good" : "bad"); },
     reveal: () => { inp.value = String(q.answer); el.classList.remove("bad"); el.classList.add("good"); },
     reset: () => { inp.value = ""; el.classList.remove("good", "bad"); } };
