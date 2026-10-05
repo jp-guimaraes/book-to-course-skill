@@ -1,0 +1,16 @@
+#!/bin/sh
+# Entry point of a course AppImage: starts the bundled Electron, which loads resources/app (the course + main.js).
+HERE="$(dirname "$(readlink -f "$0")")"
+# Chromium sandboxes its renderers with unprivileged user namespaces. Where the system forbids them (e.g. Ubuntu 24.04's
+# AppArmor default) it would need a setuid helper, which an AppImage cannot carry — so run without the sandbox there.
+# The window only shows the bundled course; links to other sites open in the user's own browser.
+# Chromium also refuses to start as root with the sandbox on.
+SANDBOX=""
+if [ "$(id -u)" = 0 ] || ! command -v unshare >/dev/null 2>&1 || ! unshare --user --map-root-user true >/dev/null 2>&1; then
+  SANDBOX="--no-sandbox"
+fi
+# The system's fonts plus the bundled colour emoji font (many distros ship no emoji font; the course UI uses emoji).
+if [ -f "$HERE/usr/share/course-app/fontconfig/fonts.conf" ] && [ -f /etc/fonts/fonts.conf ]; then
+  export FONTCONFIG_FILE="$HERE/usr/share/course-app/fontconfig/fonts.conf"
+fi
+exec "$HERE/usr/lib/course-app/course-app" $SANDBOX "$@"

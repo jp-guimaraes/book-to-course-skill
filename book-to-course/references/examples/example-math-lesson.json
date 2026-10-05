@@ -45,6 +45,18 @@
       "md": "$\\sqrt{\\Delta}$ has no real value, so the equation has no real roots — only complex ones."
     },
     {
+      "type": "derivation",
+      "title": "Solving x² - 5x + 6 = 0",
+      "rel": "=",
+      "steps": [
+        { "lhs": "x", "rhs": "\\frac{5 \\pm \\sqrt{(-5)^2 - 4 \\cdot 1 \\cdot 6}}{2 \\cdot 1}", "why": "The formula with $a=1$, $b=-5$, $c=6$." },
+        { "rhs": "\\frac{5 \\pm \\sqrt{1}}{2}", "why": "$(-5)^2 - 4 \\cdot 1 \\cdot 6 = 25 - 24 = 1$." },
+        { "rhs": "\\frac{5 \\pm 1}{2}", "why": "$\\sqrt{1} = 1$." }
+      ],
+      "result": "x = 3 \\text{ or } x = 2",
+      "note": "Two real roots, as expected since $\\Delta = 1 > 0$."
+    },
+    {
       "type": "quiz",
       "id": "ex-math-quiz-quadratic",
       "title": "Quick check",

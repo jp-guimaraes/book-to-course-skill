@@ -54,8 +54,17 @@ what you cannot reasonably decide; otherwise state your assumption and go on:
 python3 scripts/extract_book.py /path/to/book.epub work/extract
 ```
 Read `work/extract/outline.md` and the warnings. PDF exit code 2 means a scanned book — run `ocrmypdf` if available, or tell
-the user an EPUB or text-based PDF is needed. PDF extraction is heuristic: when code or tables look garbled, rasterize the page
-(`pdftoppm -r 110 -f N -l N -png`) and look at it, then fix the text from the picture. EPUB/HTML are the cleanest sources.
+the user an EPUB or text-based PDF is needed. PDF extraction is heuristic: when code, tables **or math** look garbled,
+rasterize the page (`pdftoppm -r 110 -f N -l N -png`) and look at it, then fix the text from the picture. EPUB/HTML are
+the cleanest sources.
+
+**Math-heavy PDFs are garbled more often than prose**, because `pdftotext` maps the math font's glyphs to whatever
+Unicode code point the PDF happens to embed — not necessarily the right one. Watch for: Greek letters (`λ`, `θ`, …)
+silently vanishing from the extracted text; `=` turning into a lookalike character such as `⫽`; `×`/`±`/`√` turning into
+the wrong symbol or disappearing; matrices and multi-line equations collapsing onto one line with their layout lost. A
+page that reads fine in prose but has a nonsensical equation ("fica Ax x com algum escalar") is this, not a typo in the
+book — rasterize that page and transcribe the formula directly from the image into `$...$`/`$$...$$` (`references/math.md`
+has the supported LaTeX subset); don't try to guess the original from the garbled text.
 
 ### 3. Scaffold and plan
 ```bash
@@ -107,7 +116,7 @@ built course is fully usable: unfinished chapters simply don't appear yet.
 ## Variants
 
 - **Non-programming books** (history, language, theory): use quizzes, flashcards, `reveal` prompts, tables, SVG/flow diagrams, and `selfcheck` exercises (write-and-compare tasks with a checklist).
-- **Mathematics textbooks**: write equations as `$...$` (inline) or `$$...$$` (display) in any `md`/text field — see `references/math.md` for the supported LaTeX subset. `svg` is still the right tool for geometry and freehand diagrams, not for equations. Practice means `numeric` questions (a typed answer checked within a tolerance — use it instead of `fill` whenever the answer is a number) and `order` of proof steps, not more reading.
+- **Mathematics textbooks**: write equations as `$...$` (inline) or `$$...$$` (display) in any `md`/text field — see `references/math.md` for the supported LaTeX subset. Use a `derivation` block for a worked example that proceeds line by line (one algebraic move per step, each with a `why`); use `stepper` for a numeric walkthrough instead when that reads more naturally. `svg` is still the right tool for geometry and freehand diagrams, not for equations. Practice means `numeric` questions (a typed answer checked within a tolerance — use it instead of `fill` whenever the answer is a number) and `order` of proof steps, not more reading.
 - **Language-learning books**: heavy on flashcards, `fill` and `order` questions; keep example sentences from the book short.
 - **Figures in the book**: don't copy images; re-draw the idea as an `svg` or `flow` block, or describe it in a `table`.
 - **Course language ≠ book language**: translate explanations; keep code and official term names, adding the translation in `terms`.

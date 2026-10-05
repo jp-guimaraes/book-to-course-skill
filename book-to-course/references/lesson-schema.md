@@ -5,7 +5,7 @@ Contents
 - course.json / chapter.json
 - Lesson file
 - Text formatting (mini-Markdown)
-- Block types: text, callout, code, stepper, flow, reveal, from_book, table, svg, quiz, exercise, flashcards, summary
+- Block types: text, callout, code, stepper, derivation, flow, reveal, from_book, table, svg, quiz, exercise, flashcards, summary
 - Question types
 - Test lessons
 - Validation rules the builder enforces
@@ -87,6 +87,22 @@ Highlighted languages: go, python, js/ts, java/c#/kotlin, c/c++, rust, bash, sql
 ```
 Each step needs `md` and/or `code`. Repeating the same listing with different `highlight` line numbers (1-based) walks the learner
 through it — ideal for tracing execution. Use 3–7 steps.
+
+### derivation — step-by-step algebra (the math equivalent of `stepper`)
+```json
+{ "type": "derivation", "title": "Solving 2x + 6 = 10", "intro": "optional md", "rel": "=",
+  "steps": [
+    { "lhs": "2x + 6", "rhs": "10", "why": "The equation from the task." },
+    { "lhs": "2x",     "rhs": "4",  "why": "Subtract 6 from both sides." },
+    { "rhs": "2",       "why": "Divide both sides by 2." }
+  ],
+  "result": "x = 2", "note": "optional md shown under the steps" }
+```
+`lhs`/`rhs`/`rel`/`result` are **bare LaTeX — no `$` delimiters** (they're always treated as math); `why` is a normal md field, so
+`$…$` works inside it. `rhs` is required on every step; an omitted `lhs` leaves that cell blank — use it for a continuation line
+that keeps working on the previous line's result. `rel` defaults to the block's own `rel` (itself defaulting to `=`); set it per
+step for a line that changes relation (e.g. `\le`, `\approx`). One algebraic move per step, ≥2 steps, up to about 8. The learner
+steps through like a `stepper` (dots, prev/next) or reveals every line at once with "Show all".
 
 ### flow — click-through process diagram
 `{ "type": "flow", "title": "…", "nodes": [ { "label": "Kod źródłowy", "detail": "md shown when the node is reached" }, … ] }` (2–7 nodes)

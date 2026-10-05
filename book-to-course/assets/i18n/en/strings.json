@@ -55,6 +55,8 @@
   "showSolution": "Show solution",
   "hideSolution": "Hide solution",
   "confirmSolution": "Try once more on your own first! Really show the solution?",
+  "dlgYes": "Yes",
+  "dlgNo": "Cancel",
   "stTodo": "To do",
   "stPassed": "Passed",
   "stFailed": "Tests not passing yet",
@@ -105,5 +107,10 @@
   "callout_warning": "Careful",
   "callout_analogy": "Analogy",
   "callout_key": "Remember",
-  "callout_example": "Example"
+  "callout_example": "Example",
+  "derivation": "Derivation",
+  "why": "Why",
+  "result": "Result",
+  "showAll": "Show all",
+  "stepByStep": "Step by step"
 }
