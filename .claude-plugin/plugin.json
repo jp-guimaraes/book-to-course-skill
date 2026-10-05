@@ -1,7 +1,7 @@
 {
   "name": "book-to-course",
-  "version": "1.1.0",
-  "description": "Turn a book or document (EPUB, PDF, HTML, DOCX, Markdown, TXT) into an interactive, beginner-friendly course delivered as a local web page — with lessons, animations, quizzes, chapter tests, flashcards and programming exercises checked by unit tests. Includes course-to-apk to package a course as an offline Android app (APK).",
+  "version": "1.2.0",
+  "description": "Turn a book or document (EPUB, PDF, HTML, DOCX, Markdown, TXT) into an interactive, beginner-friendly course delivered as a local web page — with lessons, animations, quizzes, chapter tests, flashcards and programming exercises checked by unit tests. Includes course-to-apk to package a course as an offline Android app (APK) and course-to-appimage to package it as a Linux desktop app (AppImage).",
   "author": {
     "name": "Sebastian Haba",
     "url": "https://github.com/sebastianhaba"
@@ -18,10 +18,13 @@
     "pdf",
     "quiz",
     "exercises",
-    "android"
+    "android",
+    "linux",
+    "appimage"
   ],
   "skills": [
     "./book-to-course",
-    "./course-to-apk"
+    "./course-to-apk",
+    "./course-to-appimage"
   ]
 }
