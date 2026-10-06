@@ -714,6 +714,30 @@ function qFill(q, uid) {
     reveal: () => { inp.value = [].concat(q.answer)[0]; el.classList.remove("bad"); el.classList.add("good"); },
     reset: () => { inp.value = ""; el.classList.remove("good", "bad"); } };
 }
+/* A typed number is ambiguous when it has a comma ("0,125" is 0.125 to a pt/pl learner, 125 to
+   a US one), so try both readings and accept the answer if either one matches. */
+function numReadings(s) {
+  s = String(s == null ? "" : s).trim().replace(/[\s\u00A0]+/g, "");
+  if (!s) return [];
+  const out = [Number(s.replace(/,/g, ""))];                              // comma = grouping: "1,500", "1,234.5"
+  if (s.includes(",")) out.push(Number(s.replace(/\./g, "").replace(",", "."))); // comma = decimal: "0,125", "1.234,5"
+  return out.filter(n => !Number.isNaN(n));
+}
+function numericMatches(input, answer, tol) {
+  const slash = String(input == null ? "" : input).indexOf("/");
+  const candidates = slash < 0 ? numReadings(input) : [].concat(...numReadings(String(input).slice(0, slash)).map(num =>
+    numReadings(String(input).slice(slash + 1)).filter(den => den !== 0).map(den => num / den)));
+  return candidates.some(v => Math.abs(v - answer) <= tol);
+}
+function qNumeric(q, uid) {
+  const inp = h("input", { type: "text", inputmode: "decimal", autocomplete: "off", spellcheck: "false", placeholder: q.placeholder || "…", "aria-label": t("yourAnswer") });
+  const el = h("div", { class: "fill-in" }, inp, q.unit ? h("span", { class: "note-small" }, " " + q.unit) : null);
+  const tol = Math.abs(q.tolerance || 0);
+  return { el, answered: () => inp.value.trim() !== "", correct: () => numericMatches(inp.value, q.answer, tol), lock: v => (inp.disabled = v),
+    mark: ok => { el.classList.remove("good", "bad"); el.classList.add(ok ? "good" : "bad"); },
+    reveal: () => { inp.value = String(q.answer); el.classList.remove("bad"); el.classList.add("good"); },
+    reset: () => { inp.value = ""; el.classList.remove("good", "bad"); } };
+}
 function qOrder(q, uid) {
   const n = q.items.length; let order = [...Array(n).keys()]; const rnd = rng(uid);
   const shuffle = () => { for (let k = 0; k < 6; k++) { for (let i = n - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; } if (order.some((v, i) => v !== i)) break; } };
@@ -733,7 +757,7 @@ function qOrder(q, uid) {
 function makeQuestion(q0, qi, quizId) {
   const q = q0.type === "truefalse" ? Object.assign({}, q0, { type: "single", options: [t("tTrue"), t("tFalse")], answer: q0.answer ? 0 : 1 }) : q0;
   const uid = quizId + "-" + qi;
-  const impl = q.type === "multi" ? qMulti(q, uid) : q.type === "fill" ? qFill(q, uid) : q.type === "order" ? qOrder(q, uid) : qSingle(q, uid);
+  const impl = q.type === "multi" ? qMulti(q, uid) : q.type === "fill" ? qFill(q, uid) : q.type === "numeric" ? qNumeric(q, uid) : q.type === "order" ? qOrder(q, uid) : qSingle(q, uid);
   const fb = h("div", { class: "q-feedback", role: "status" });
   const root = h("div", { class: "question" }, h("div", { class: "q-head" }, h("span", { class: "q-num" }, String(qi + 1)), h("div", { class: "q-text", html: md(q.q) })), q.code ? codeBlock({ code: q.code, lang: q.lang }) : null, impl.el);
   const hints = q.hints || []; let used = 0;

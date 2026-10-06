@@ -58,8 +58,9 @@ Target 35–60% practice by time (`build_course.py` prints it per chapter). Per 
 every 8–12 minutes of doing. Per chapter: 3–5 lessons + a test; at least one real exercise (programming books: 2–4, ending with a small
 "mini-project" that combines the chapter's ideas). If the book is dense theory (e.g. algorithms, law, history), practice means
 prediction questions, classification tasks (`order`, `multi`), applying a rule to a new case, and self-check exercises — not more reading.
-For math books specifically: `fill` questions with a numeric answer, `order` of the steps in a proof or derivation, and `reveal`
-predictions ("what does this simplify to?") before showing the next line.
+For math books specifically: `numeric` questions (not `fill`) whenever the answer is a number — it accepts `0.5`/`0,5`/`1/2` and
+a `tolerance` instead of demanding one exact string — `order` of the steps in a proof or derivation, and `reveal` predictions
+("what does this simplify to?") before showing the next line.
 
 ## Quizzes, hints, tests
 **Questions**
@@ -67,7 +68,7 @@ predictions ("what does this simplify to?") before showing the next line.
 - Wrong options are plausible misconceptions (off-by-one, confusing `=` and `==`), never silly or trick-worded.
 - No "all of the above"/"none of the above". Keep options similar in length so the answer doesn't give itself away.
 - The `explanation` says **why the right answer is right and why the most tempting wrong one is wrong** — this is where learning happens.
-- Mix types: `single` for concepts, `multi` for "which are true", `fill` for syntax/commands, `order` for processes, `truefalse` for quick misconceptions, code snippets for tracing.
+- Mix types: `single` for concepts, `multi` for "which are true", `fill` for syntax/commands, `numeric` for a computed value, `order` for processes, `truefalse` for quick misconceptions, code snippets for tracing.
 
 **Hints** (1–3 per question/exercise), increasing in strength: (1) re-aim attention ("look at what `i` is on the second pass"), (2) name the concept or tool ("this is a job for `range`"), (3) nearly the answer without giving it away. Hints must never be the explanation itself.
 

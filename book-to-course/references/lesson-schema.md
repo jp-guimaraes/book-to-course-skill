@@ -162,6 +162,7 @@ Common fields: `q`* (md), `explanation` (md, shown after a correct answer or aft
 | `truefalse` | `answer`* (true/false) | statement in `q` |
 | `fill` | `answer`* (string or list of accepted strings), `ignore_case` (default true), `placeholder` | short typed answer; case and extra spaces ignored; accept variants (`["x := 1", "x:=1"]`) |
 | `order` | `items`* (≥2 strings **in the correct order**) | the page shuffles them; learner reorders with ↑/↓ |
+| `numeric` | `answer`* (number), `tolerance` (default 0), `unit` (optional label shown after the box) | typed numeric answer, accepted within `tolerance`; accepts `0.5`, `0,5` or `1/2` |
 
 "Find the bug" or "what does this print?" = `single`/`fill` with a `code` snippet.
 
