@@ -353,7 +353,36 @@ function mathParse(src) {
   return wrapRow(parts.length ? parts : [{ mml: "" }]);
 }
 
+/* MathML Core shipped in Chrome/Edge 109 (Jan 2023); older browsers treat <math>/<mfrac>/…
+   as unknown inline elements with no special layout, so a real fraction renders no taller
+   than a single bare number — that gap is the signal this probe checks for. */
+let mathmlOk = null;
+function mathmlSupported() {
+  if (mathmlOk !== null) return mathmlOk;
+  try {
+    const probe = h("div", { style: "position:absolute;visibility:hidden;left:-9999px;top:-9999px" });
+    document.body.append(probe);
+    // measure the <math> element itself, not the wrapper div — an unsupported browser gives
+    // it no special layout, so its own height stays flat instead of growing with the fraction
+    probe.innerHTML = '<math><mfrac><mn>1</mn><mn>2</mn></mfrac></math>';
+    const fracH = probe.firstChild.getBoundingClientRect().height;
+    probe.innerHTML = '<math><mn>1</mn></math>';
+    const plainH = probe.firstChild.getBoundingClientRect().height;
+    probe.remove();
+    // no usable layout yet (e.g. probed inside a hidden/display:none ancestor) — can't tell
+    // either way, so assume supported and don't cache a guess; a later real call can re-probe
+    if (!plainH) return true;
+    mathmlOk = fracH > plainH * 1.3;
+  } catch (e) { mathmlOk = true; }
+  return mathmlOk;
+}
+let mathmlWarned = false;
 function tex2mml(src, display) {
+  if (!mathmlSupported()) {
+    if (!mathmlWarned) { mathmlWarned = true; document.body.prepend(h("div", { class: "mathml-warn" }, "⚠ " + t("mathmlUnsupported"))); }
+    const raw = (display ? "$$" : "$") + src + (display ? "$$" : "$");
+    return '<span class="math-raw" title="' + esc(t("mathmlUnsupported")) + '">' + esc(raw) + "</span>";
+  }
   try {
     const body = mathParse(String(src == null ? "" : src));
     return '<math display="' + (display ? "block" : "inline") + '">' + body + "</math>";

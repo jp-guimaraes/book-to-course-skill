@@ -107,5 +107,11 @@
   "callout_warning": "Atenção",
   "callout_analogy": "Analogia",
   "callout_key": "Lembre-se",
-  "callout_example": "Exemplo"
+  "callout_example": "Exemplo",
+  "derivation": "Dedução",
+  "why": "Por quê",
+  "result": "Resultado",
+  "showAll": "Mostrar tudo",
+  "stepByStep": "Passo a passo",
+  "mathmlUnsupported": "Seu navegador não exibe corretamente fórmulas matemáticas — atualize-o para ver as equações formatadas corretamente."
 }

@@ -112,5 +112,6 @@
   "why": "Dlaczego",
   "result": "Wynik",
   "showAll": "Pokaż wszystko",
-  "stepByStep": "Krok po kroku"
+  "stepByStep": "Krok po kroku",
+  "mathmlUnsupported": "Twoja przeglądarka nie wyświetla poprawnie wzorów matematycznych — zaktualizuj ją, aby zobaczyć równania prawidłowo sformatowane."
 }
